@@ -18,7 +18,6 @@ function Routes() {
           headerShown: false,
         }} />
 
-
       <Stack.Screen name="passenger" component={Passenger}
         options={{
           headerShadowVisible: false,

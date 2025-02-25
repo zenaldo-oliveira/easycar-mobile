@@ -1,71 +1,74 @@
 import { getCurrentPositionAsync, requestForegroundPermissionsAsync } from "expo-location";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Text, TextInput, View } from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import MyButton from "../../components/mybutton/mybutton";
 import icons from "../../constants/icons";
 import { styles } from "./passenger.style";
 
 function Passenger(props) {
-
-  const [myLocation, setMyLocation] = useState({});
+  const [myLocation, setMyLocation] = useState(null);
   const [title, setTitle] = useState("");
+  const [markers, setMarkers] = useState([
+    {
+      id: 1,
+      title: "Origem",
+      description: "Av. Paulista, 1500",
+      coordinate: { latitude: -23.561747, longitude: -46.656244 },
+    },
+    {
+      id: 2,
+      title: "Destino",
+      description: "Rua dos Três Irmãos, 123",
+      coordinate: { latitude: -23.550520, longitude: -46.633308 },
+    },
+  ]);
 
+  // Função simulada para buscar a corrida (Você pode implementá-la conforme sua lógica)
+  async function RequestRideFromUser() {
+    // Lógica para buscar a corrida
+  }
+
+  // Função para pedir permissão e obter a localização
   async function RequestPermissionAndGetLocation() {
-
     const { granted } = await requestForegroundPermissionsAsync();
-    console.log('Permissão concedida:', granted);  // Log para ver se a permissão foi concedida
 
     if (granted) {
-      // Obtém a posição atual do usuário
       const currentPosition = await getCurrentPositionAsync();
-      console.log('Localização obtida:', currentPosition.coords);
 
-      if (currentPosition.coords) {
+      if (currentPosition.coords)
         return currentPosition.coords;
-      } else {
+      else
         return {};
-      }
     } else {
-
+      Alert.alert("Permissão de localização negada", "Não foi possível acessar sua localização.");
       return {};
     }
   }
-  async function RequestRideFromUser() {
-    //Busca dados de corrida aberta na API para o usuario...
-    return {};
 
-  }
-
+  // Função para carregar dados e atualizar a tela
   async function LoadScreen() {
-    // Buscar dados de corrida aberta na API para o usuário...
-    const response = await RequestRideFromUser();
+    await RequestRideFromUser();
 
+    const location = await RequestPermissionAndGetLocation();
 
-    if (!response.ride_id) {
-      // Chama a função para obter a localização do usuário
-      const location = await RequestPermissionAndGetLocation();
-
-      if (location.latitude) {
-        setTitle("Encontre a sua carona agora");
-        setMyLocation(location);
-
-      } else {
-
-      }
-
+    if (location.latitude) {
+      // Atualiza o título da tela com o endereço do local de partida
+      setTitle("Encontre a sua carona agora");
+      setMyLocation(location);
     } else {
-
+      Alert.alert("Erro", "Não foi possível obter sua localização.");
     }
   }
 
+  // UseEffect para carregar dados na inicialização
   useEffect(() => {
     LoadScreen();
   }, []);
 
   return (
     <View style={styles.container}>
-      {myLocation && myLocation.latitude ? (
+      {myLocation ? (
         <>
           <MapView
             style={styles.map}
@@ -73,20 +76,39 @@ function Passenger(props) {
             initialRegion={{
               latitude: myLocation.latitude,
               longitude: myLocation.longitude,
-              latitudeDelta: 0.004,
-              longitudeDelta: 0.004,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
             }}
           >
+            {/* Marcador da localização do usuário */}
             <Marker
               coordinate={{
                 latitude: myLocation.latitude,
                 longitude: myLocation.longitude,
               }}
-              title="Zenaldo Hackerhackeia"
-              description="Av. dos bobos, 1022"
+              title="Sua localização"
+              description="Onde você está agora"
               image={icons.location}
               style={styles.marker}
             />
+
+            {/* Marcadores de Origem e Destino */}
+            {markers.map((marker) => (
+              <Marker
+                key={marker.id}
+                coordinate={marker.coordinate}
+                title={marker.title}
+                description={marker.description}
+                image={icons.location}
+                style={styles.marker}
+              >
+                {/* Mensagens dentro do marcador */}
+                <View style={styles.markerContent}>
+                  <Text>{marker.title}</Text>
+                  <Text>{marker.description}</Text>
+                </View>
+              </Marker>
+            ))}
           </MapView>
 
           <View style={styles.footer}>
@@ -94,12 +116,12 @@ function Passenger(props) {
               <Text>{title}</Text>
             </View>
 
-            <View style={styles.footerFilds}>
+            <View style={styles.footerFields}>
               <Text>Origem</Text>
               <TextInput style={styles.input} />
             </View>
 
-            <View style={styles.footerFilds}>
+            <View style={styles.footerFields}>
               <Text>Destino</Text>
               <TextInput style={styles.input} />
             </View>
@@ -108,7 +130,7 @@ function Passenger(props) {
           <MyButton text="CONFIRMAR" theme="default" />
         </>
       ) : (
-        <View style={styles.loadingContainer}>
+        <View style={styles.loading}>
           <ActivityIndicator size="large" />
         </View>
       )}

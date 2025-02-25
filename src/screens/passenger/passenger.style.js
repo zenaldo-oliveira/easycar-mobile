@@ -22,7 +22,7 @@ export const styles = {
 
 
   },
-  footerFilds: {
+  footerFields: {
     margin: 5,
 
   },
@@ -39,7 +39,7 @@ export const styles = {
     marginBottom: 5,
     borderRadius: 12,
   },
-  loadingContainer: {
+  loading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
