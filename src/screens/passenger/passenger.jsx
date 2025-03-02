@@ -1,67 +1,169 @@
-import { getCurrentPositionAsync, requestForegroundPermissionsAsync } from "expo-location";
+import {
+  getCurrentPositionAsync,
+  requestForegroundPermissionsAsync,
+  reverseGeocodeAsync,
+} from "expo-location";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Text, TextInput, View } from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
-import MyButton from "../../components/mybutton/mybutton";
-import icons from "../../constants/icons";
-import { styles } from "./passenger.style";
+import MyButton from "../../components/mybutton/mybutton.jsx";
+import icons from "../../constants/icons.js";
+import { styles } from "./passenger.style.js";
 
 function Passenger(props) {
+  const userId = 1; // ID do usuário logado (simulado
   const [myLocation, setMyLocation] = useState(null);
   const [title, setTitle] = useState("");
-  const [markers, setMarkers] = useState([
-    {
-      id: 1,
-      title: "Origem",
-      description: "Av. Paulista, 1500",
-      coordinate: { latitude: -23.561747, longitude: -46.656244 },
-    },
-    {
-      id: 2,
-      title: "Destino",
-      description: "Rua dos Três Irmãos, 123",
-      coordinate: { latitude: -23.550520, longitude: -46.633308 },
-    },
-  ]);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [dropoffAddress, setDropoffAddress] = useState("");
+  const [status, setStatus] = useState("");
+  const [rideId, setRideId] = useState(0);
+  const [driverName, setDriverName] = useState("");
 
-  // Função simulada para buscar a corrida (Você pode implementá-la conforme sua lógica)
   async function RequestRideFromUser() {
-    // Lógica para buscar a corrida
+    // Acessar dados na API...
+    // const response = {};
+
+    // const response = {
+    //   ride_id: 1,
+    //   passenger_user_id: 1,
+    //   passenger_name: "Zenaldo Hacker",
+    //   passenger_phone: "(11) 99999-9999",
+    //   pickup_address: "Praça alencastro",
+    //   pickup_date: "2025-02-19",
+    //   pickup_latitude: "-23.543132",
+    //   pickup_longitude: "-46.665389",
+    //   dropoff_address: "Shopping estação",
+    //   status: "P",
+    //   driver_user_id: null,
+    //   driver_name: null,
+    //   driver_phone: null,
+    // };
+
+    const response = {
+      ride_id: 1,
+      passenger_user_id: 1,
+      passenger_name: "Zenaldo Hacker",
+      passenger_phone: "(11) 99999-9999",
+      pickup_address: "Praça alencastro",
+      pickup_date: "2025-02-19",
+      pickup_latitude: "-23.543132",
+      pickup_longitude: "-46.665389",
+      dropoff_address: "Shopping estação",
+      status: "A",
+      driver_user_id: 2,
+      driver_name: "Developer desenvolvedor web",
+      driver_phone: "(65) 1478-5236",
+    };
+    return response;
   }
 
-  // Função para pedir permissão e obter a localização
   async function RequestPermissionAndGetLocation() {
     const { granted } = await requestForegroundPermissionsAsync();
 
-    if (granted) {
-      const currentPosition = await getCurrentPositionAsync();
+    if (!granted) {
+      Alert.alert("Permissão de localização negada");
+      return null;
+    }
 
-      if (currentPosition.coords)
-        return currentPosition.coords;
-      else
-        return {};
-    } else {
-      Alert.alert("Permissão de localização negada", "Não foi possível acessar sua localização.");
-      return {};
+    const currentPosition = await getCurrentPositionAsync();
+    return currentPosition.coords; // Retorna as coordenadas corretamente
+  }
+
+  async function RequestAddressName(lat, long) {
+    const response = await reverseGeocodeAsync({
+      latitude: lat,
+      longitude: long,
+    });
+
+    if (
+      response[0].street &&
+      response[0].streetNumber &&
+      response[0].district
+    ) {
+      setPickupAddress(
+        response[0].street +
+          "," +
+          response[0].streetNumber +
+          "-" +
+          response[0].district
+      );
     }
   }
 
-  // Função para carregar dados e atualizar a tela
   async function LoadScreen() {
-    await RequestRideFromUser();
+    //buscar dados de corrida na API para o usuario...
+    const response = await RequestRideFromUser();
 
-    const location = await RequestPermissionAndGetLocation();
+    if (!response.ride_id) {
+      //   const location = { latitude: -23.561747, longitude: -46.656244 };
+      const location = await RequestPermissionAndGetLocation();
 
-    if (location.latitude) {
-      // Atualiza o título da tela com o endereço do local de partida
-      setTitle("Encontre a sua carona agora");
-      setMyLocation(location);
+      if (location.latitude) {
+        setTitle("Encontre a sua carona agora");
+        setMyLocation(location);
+        RequestAddressName(location.latitude, location.longitude);
+      } else {
+        Alert.alert("Não foi possível obter sua localização...");
+      }
     } else {
-      Alert.alert("Erro", "Não foi possível obter sua localização.");
+      setTitle(
+        response.status == "P"
+          ? "Aguarndado uma carona..."
+          : "Carona confirmada"
+      );
+      setMyLocation({
+        latitude: Number(response.pickup_latitude),
+        longitude: Number(response.pickup_longitude),
+      });
+
+      setPickupAddress(response.pickup_address);
+      setDropoffAddress(response.dropoff_address);
+      setStatus(response.status);
+      setRideId(response.ride_id);
+      setDriverName(response.driver_name + " - " + response.driver_phone);
     }
   }
 
-  // UseEffect para carregar dados na inicialização
+  async function AskForRide() {
+    if (!myLocation) {
+      Alert.alert("Localização ainda não carregada!");
+      return;
+    }
+
+    const json = {
+      Passenger_id: userId,
+      pickup_address: pickupAddress,
+      dropoff_address: dropoffAddress,
+      pickup_latitude: myLocation.latitude,
+      pickup_longitude: myLocation.longitude,
+    };
+
+    console.log("Fazer POST para o servidor: ", json);
+
+    props.navigation.goBack();
+  }
+
+  async function CancelRide() {
+    const json = {
+      passenger_user_id: userId,
+      ride_id: rideId,
+    };
+    console.log("Cancelar carona", json);
+    props.navigation.goBack();
+  }
+
+  async function FinishRide() {
+    const json = {
+      passenger_user_id: userId,
+      ride_id: rideId,
+    };
+    console.log("Finalizar carona", json);
+
+    props.navigation.goBack();
+  }
+
+  // Executa LoadScreen() ao montar o componente
   useEffect(() => {
     LoadScreen();
   }, []);
@@ -70,45 +172,28 @@ function Passenger(props) {
     <View style={styles.container}>
       {myLocation ? (
         <>
+          {/* Mapa exibindo a localização do usuário  */}
           <MapView
             style={styles.map}
             provider={PROVIDER_DEFAULT}
             initialRegion={{
               latitude: myLocation.latitude,
               longitude: myLocation.longitude,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
+              latitudeDelta: 0.004,
+              longitudeDelta: 0.004,
             }}
           >
-            {/* Marcador da localização do usuário */}
+            {/* Marcador no mapa representando a posição do usuário */}
             <Marker
               coordinate={{
                 latitude: myLocation.latitude,
                 longitude: myLocation.longitude,
               }}
-              title="Sua localização"
-              description="Onde você está agora"
+              title="Heber Stein Mazutti"
+              description="Av. Paulista, 1500"
               image={icons.location}
               style={styles.marker}
             />
-
-            {/* Marcadores de Origem e Destino */}
-            {markers.map((marker) => (
-              <Marker
-                key={marker.id}
-                coordinate={marker.coordinate}
-                title={marker.title}
-                description={marker.description}
-                image={icons.location}
-                style={styles.marker}
-              >
-                {/* Mensagens dentro do marcador */}
-                <View style={styles.markerContent}>
-                  <Text>{marker.title}</Text>
-                  <Text>{marker.description}</Text>
-                </View>
-              </Marker>
-            ))}
           </MapView>
 
           <View style={styles.footer}>
@@ -118,20 +203,55 @@ function Passenger(props) {
 
             <View style={styles.footerFields}>
               <Text>Origem</Text>
-              <TextInput style={styles.input} />
+              <TextInput
+                style={styles.input}
+                value={pickupAddress}
+                onChangeText={(text) => setPickupAddress(text)}
+                editable={status == "" ? true : false}
+              />
             </View>
 
             <View style={styles.footerFields}>
               <Text>Destino</Text>
-              <TextInput style={styles.input} />
+              <TextInput
+                style={styles.input}
+                value={dropoffAddress}
+                onChangeText={(text) => setDropoffAddress(text)}
+                editable={status == "" ? true : false}
+              />
             </View>
-          </View>
 
-          <MyButton text="CONFIRMAR" theme="default" />
+            {status == "A" && (
+              <View style={styles.footerFields}>
+                <Text>Motorista</Text>
+                <TextInput
+                  style={styles.input}
+                  value={driverName}
+                  editable={false}
+                />
+              </View>
+            )}
+          </View>
+          {status == "" && (
+            <MyButton text="CONFIRMAR" theme="default" onClick={AskForRide} />
+          )}
+
+          {status == "P" && (
+            <MyButton text="CANCELAR" theme="red" onClick={CancelRide} />
+          )}
+
+          {status == "A" && (
+            <MyButton
+              text="FINALIZAR CARONA"
+              theme="red"
+              onClick={FinishRide}
+            />
+          )}
         </>
       ) : (
+        // Exibe um indicador de carregamento enquanto a localização é obtida
         <View style={styles.loading}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size={"large"} />
         </View>
       )}
     </View>

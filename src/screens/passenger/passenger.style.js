@@ -7,41 +7,31 @@ export const styles = {
     width: "100%"
   },
   marker: {
-    backgroundColor: "red",
-    height: 50,
-    width: 50,
-    borderRadius: 25,
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    justifyContent: "center",
-    alignItems: "center"
+    width: 60,
+    height: 60
   },
   footer: {
-    backgroundColor: "#f3d6d62",
-
+    backgroundColor: "#fff",
 
   },
   footerFields: {
-    margin: 5,
-
+    margin: 15
   },
   footerText: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 12,
+    marginTop: 15
   },
   input: {
-    backgroundColor: "#ffff",
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#dad9d9",
-    paddingHorizontal: 5,
-    marginBottom: 5,
-    borderRadius: 12,
+    borderColor: "#cccccc",
+    padding: 10
   },
   loading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
   }
-}
+};
+

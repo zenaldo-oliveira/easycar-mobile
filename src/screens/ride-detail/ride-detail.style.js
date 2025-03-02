@@ -1,10 +1,10 @@
 export const styles = {
   container: {
-    flex: 1
+    flex: 1,
   },
   map: {
     flex: 1,
-    width: "100%"
+    width: "100%",
   },
   marker: {
     backgroundColor: "red",
@@ -15,16 +15,13 @@ export const styles = {
     bottom: 20,
     right: 20,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   footer: {
     backgroundColor: "#f3d6d62",
-
-
   },
   footerFilds: {
     margin: 5,
-
   },
   footerText: {
     alignItems: "center",
@@ -35,12 +32,7 @@ export const styles = {
     backgroundColor: "#ffff",
     borderWidth: 1,
     borderColor: "#dad9d9",
-    paddingHorizontal: 5,
     marginBottom: 5,
     borderRadius: 12,
-
-
-
-
-  }
-}
+  },
+};
